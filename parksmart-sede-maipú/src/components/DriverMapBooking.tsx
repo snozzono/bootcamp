@@ -65,7 +65,7 @@ export default function DriverMapBooking({ slots, currentUser, onReserve, active
     setAiError(null);
     setAiResult(null);
     try {
-      const result = await fetchRecomendacion(currentUser.id);
+      const result = await fetchRecomendacion(currentUser);
       setAiResult(result);
       const slot = slots.find(s => s.id === result.slotId);
       if (slot) setSelectedSlot(slot);

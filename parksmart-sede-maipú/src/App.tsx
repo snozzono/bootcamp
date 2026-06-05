@@ -28,8 +28,28 @@ import StaffDashboard from './components/StaffDashboard'
 import StaffGridOccupancy from './components/StaffGridOccupancy'
 import StaffUsersManagement from './components/StaffUsersManagement'
 
+const SESSION_STORAGE_KEY = 'parksmart.session'
+
+function loadStoredSession(): ApiUsuario | null {
+  const raw = localStorage.getItem(SESSION_STORAGE_KEY)
+  if (!raw) return null
+
+  try {
+    const user = JSON.parse(raw) as ApiUsuario
+    if (!user.session_token || !user.session_expires_at) return null
+    if (new Date(user.session_expires_at).getTime() <= Date.now()) {
+      localStorage.removeItem(SESSION_STORAGE_KEY)
+      return null
+    }
+    return user
+  } catch {
+    localStorage.removeItem(SESSION_STORAGE_KEY)
+    return null
+  }
+}
+
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<ApiUsuario | null>(null)
+  const [currentUser, setCurrentUser] = useState<ApiUsuario | null>(() => loadStoredSession())
   const [currentPage, setCurrentPage] = useState<string>('driver-map')
 
   const [slots, setSlots] = useState<ParkingSlot[]>([])
@@ -44,18 +64,33 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 4500)
   }
 
+  const clearSession = (message?: string) => {
+    localStorage.removeItem(SESSION_STORAGE_KEY)
+    setCurrentUser(null)
+    setSlots([])
+    setUsers([])
+    setIncidents([])
+    setActiveCheckIn(null)
+    if (message) showToast(message)
+  }
+
+  const handleLogin = (user: ApiUsuario) => {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user))
+    setCurrentUser(user)
+  }
+
   const fetchData = async (user: ApiUsuario) => {
     try {
-      const slotsRaw = await fetchEstacionamientos(user.id)
+      const slotsRaw = await fetchEstacionamientos(user)
       setSlots(slotsRaw.map(mapEstacionamiento))
 
       if (user.rol !== 'conductor') {
-        const incRaw = await fetchIncidencias(user.id)
+        const incRaw = await fetchIncidencias(user)
         setIncidents(incRaw.map(mapIncidencia))
       }
 
       if (['super_admin', 'jefe_servicios_generales'].includes(user.rol)) {
-        const usersRaw = await fetchUsuarios(user.id)
+        const usersRaw = await fetchUsuarios(user)
         setUsers(usersRaw.map(mapUsuario))
       }
     } catch (err) {
@@ -64,17 +99,22 @@ export default function App() {
   }
 
   useEffect(() => {
+    const onSessionExpired = (event: Event) => {
+      const detail = (event as CustomEvent<string>).detail
+      clearSession(detail || 'Sesión expirada. Inicia sesión nuevamente.')
+    }
+    window.addEventListener('parksmart:session-expired', onSessionExpired)
+    return () => window.removeEventListener('parksmart:session-expired', onSessionExpired)
+  }, [])
+
+  useEffect(() => {
     if (!currentUser) return
     fetchData(currentUser)
     setCurrentPage(currentUser.rol === 'conductor' ? 'driver-map' : 'staff-live')
   }, [currentUser])
 
   const handleLogout = () => {
-    setCurrentUser(null)
-    setSlots([])
-    setUsers([])
-    setIncidents([])
-    setActiveCheckIn(null)
+    clearSession()
   }
 
   const handleCancelReservation = () => {
@@ -88,7 +128,7 @@ export default function App() {
       return
     }
     try {
-      await postIngreso(currentUser.id, slotId)
+      await postIngreso(currentUser, slotId)
       const slot = slots.find(s => s.id === slotId)
       if (slot) {
         setActiveCheckIn({
@@ -114,7 +154,7 @@ export default function App() {
       return
     }
     try {
-      await postIngreso(currentUser.id, slot.id)
+      await postIngreso(currentUser, slot.id)
       setActiveCheckIn({
         slotId: slot.id,
         slotCode: slot.code,
@@ -133,7 +173,7 @@ export default function App() {
     if (!currentUser) return
     const slotId = activeCheckIn?.slotId ?? 1
     try {
-      await postIncidencia(currentUser.id, slotId, `[${type}] ${description}`)
+      await postIncidencia(currentUser, slotId, `[${type}] ${description}`)
       showToast(`🚨 Incidencia "${type}" reportada a la guardia`)
     } catch (err) {
       showToast(`Error: ${(err as Error).message}`)
@@ -143,7 +183,7 @@ export default function App() {
   const handleResolveIncident = async (incidentId: string) => {
     if (!currentUser) return
     try {
-      await patchIncidencia(currentUser.id, incidentId, 'resuelta')
+      await patchIncidencia(currentUser, incidentId, 'resuelta')
       await fetchData(currentUser)
       showToast('✅ Incidencia marcada como resuelta')
     } catch (err) {
@@ -154,7 +194,7 @@ export default function App() {
   const handleUpdateSlotStatus = async (slotId: number, status: 'free' | 'occupied' | 'blocked') => {
     if (!currentUser) return
     try {
-      await patchEstadoEstacionamiento(currentUser.id, slotId, status)
+      await patchEstadoEstacionamiento(currentUser, slotId, status)
       await fetchData(currentUser)
       const code = slots.find(s => s.id === slotId)?.code ?? ''
       showToast(`📝 Plaza ${code} actualizada a: ${status.toUpperCase()}`)
@@ -169,9 +209,9 @@ export default function App() {
     if (!user) return
     try {
       if (user.active) {
-        await deleteUsuario(currentUser.id, userId)
+        await deleteUsuario(currentUser, userId)
       } else {
-        await activarUsuario(currentUser.id, userId)
+        await activarUsuario(currentUser, userId)
       }
       await fetchData(currentUser)
       showToast(`👤 Usuario ${user.name} ${user.active ? 'desactivado' : 'reactivado'}`)
@@ -184,7 +224,7 @@ export default function App() {
     if (!currentUser) return
     const user = users.find(u => u.id === userId)
     try {
-      await patchUsuarioRol(currentUser.id, userId, DISPLAY_ROL[role])
+      await patchUsuarioRol(currentUser, userId, DISPLAY_ROL[role])
       await fetchData(currentUser)
       showToast(`🛡️ Rol de ${user?.name} actualizado a: ${role}`)
     } catch (err) {
@@ -201,7 +241,7 @@ export default function App() {
   const handleCreateUser = async (payload: NuevoUsuarioPayload) => {
     if (!currentUser) return
     try {
-      await postUsuario(currentUser.id, payload)
+      await postUsuario(currentUser, payload)
       await fetchData(currentUser)
       showToast(`✅ Usuario ${payload.nombre} creado correctamente`)
     } catch (err) {
@@ -210,7 +250,7 @@ export default function App() {
   }
 
   if (!currentUser) {
-    return <LoginScreen onLogin={setCurrentUser} />
+    return <LoginScreen onLogin={handleLogin} />
   }
 
   return (

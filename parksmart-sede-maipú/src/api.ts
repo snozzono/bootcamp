@@ -12,6 +12,8 @@ export interface ApiUsuario {
   activo: boolean
   correo?: string
   patente_asociada?: string
+  session_token?: string
+  session_expires_at?: string
 }
 
 interface ApiEstacionamiento {
@@ -113,13 +115,25 @@ async function request<T>(url: string, opts: RequestInit = {}): Promise<T> {
   const res = await fetch(url, opts)
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }))
+    if (res.status === 401 || res.status === 403) {
+      window.dispatchEvent(new CustomEvent('parksmart:session-expired', {
+        detail: body.error ?? res.statusText,
+      }))
+    }
     throw new Error(body.error ?? res.statusText)
   }
   return res.json()
 }
 
-function hdrs(userId: string): Record<string, string> {
-  return { 'Content-Type': 'application/json', 'x-user-id': userId }
+function hdrs(user: ApiUsuario): Record<string, string> {
+  if (!user.session_token) {
+    throw new Error('Sesión no disponible. Inicia sesión nuevamente.')
+  }
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${user.session_token}`,
+    'x-user-id': user.id,
+  }
 }
 
 // ── Login público ─────────────────────────────────────────────
@@ -130,84 +144,84 @@ export function fetchUsuariosPublico(): Promise<ApiUsuario[]> {
 
 // ── Estacionamientos ──────────────────────────────────────────
 
-export function fetchEstacionamientos(userId: string): Promise<ApiEstacionamiento[]> {
-  return request(`${BASE}/estacionamientos`, { headers: hdrs(userId) })
+export function fetchEstacionamientos(user: ApiUsuario): Promise<ApiEstacionamiento[]> {
+  return request(`${BASE}/estacionamientos`, { headers: hdrs(user) })
 }
 
 export function patchEstadoEstacionamiento(
-  userId: string,
+  user: ApiUsuario,
   id: number,
   status: ParkingStatus,
   motivo?: string
 ): Promise<unknown> {
   return request(`${BASE}/estacionamientos/${id}/estado`, {
     method: 'PATCH',
-    headers: hdrs(userId),
+    headers: hdrs(user),
     body: JSON.stringify({ estado: STATUS_ESTADO[status], motivo_estado: motivo }),
   })
 }
 
 // ── Movimientos ───────────────────────────────────────────────
 
-export function postIngreso(userId: string, estacionamiento_id: number): Promise<unknown> {
+export function postIngreso(user: ApiUsuario, estacionamiento_id: number): Promise<unknown> {
   return request(`${BASE}/movimientos/ingreso`, {
     method: 'POST',
-    headers: hdrs(userId),
+    headers: hdrs(user),
     body: JSON.stringify({ estacionamiento_id }),
   })
 }
 
 // ── Incidencias ───────────────────────────────────────────────
 
-export function fetchIncidencias(userId: string): Promise<ApiIncidencia[]> {
-  return request(`${BASE}/incidencias`, { headers: hdrs(userId) })
+export function fetchIncidencias(user: ApiUsuario): Promise<ApiIncidencia[]> {
+  return request(`${BASE}/incidencias`, { headers: hdrs(user) })
 }
 
 export function postIncidencia(
-  userId: string,
+  user: ApiUsuario,
   estacionamiento_id: number,
   descripcion: string
 ): Promise<unknown> {
   return request(`${BASE}/incidencias`, {
     method: 'POST',
-    headers: hdrs(userId),
+    headers: hdrs(user),
     body: JSON.stringify({ estacionamiento_id, descripcion }),
   })
 }
 
-export function patchIncidencia(userId: string, id: string, estado: string): Promise<unknown> {
+export function patchIncidencia(user: ApiUsuario, id: string, estado: string): Promise<unknown> {
   return request(`${BASE}/incidencias/${id}`, {
     method: 'PATCH',
-    headers: hdrs(userId),
+    headers: hdrs(user),
     body: JSON.stringify({ estado }),
   })
 }
 
 // ── Usuarios ──────────────────────────────────────────────────
 
-export function fetchUsuarios(userId: string): Promise<ApiUsuario[]> {
-  return request(`${BASE}/usuarios`, { headers: hdrs(userId) })
+export function fetchUsuarios(user: ApiUsuario): Promise<ApiUsuario[]> {
+  return request(`${BASE}/usuarios`, { headers: hdrs(user) })
 }
 
-export function patchUsuarioRol(userId: string, targetId: string, rol: string): Promise<unknown> {
+export function patchUsuarioRol(user: ApiUsuario, targetId: string, rol: string): Promise<unknown> {
   return request(`${BASE}/usuarios/${targetId}/rol`, {
     method: 'PATCH',
-    headers: hdrs(userId),
+    headers: hdrs(user),
     body: JSON.stringify({ rol }),
   })
 }
 
-export function deleteUsuario(userId: string, targetId: string): Promise<unknown> {
+export function deleteUsuario(user: ApiUsuario, targetId: string): Promise<unknown> {
   return request(`${BASE}/usuarios/${targetId}`, {
     method: 'DELETE',
-    headers: hdrs(userId),
+    headers: hdrs(user),
   })
 }
 
-export function activarUsuario(userId: string, targetId: string): Promise<unknown> {
+export function activarUsuario(user: ApiUsuario, targetId: string): Promise<unknown> {
   return request(`${BASE}/usuarios/${targetId}/activar`, {
     method: 'PATCH',
-    headers: hdrs(userId),
+    headers: hdrs(user),
   })
 }
 
@@ -246,10 +260,10 @@ export function postRegister(payload: RegisterPayload): Promise<ApiUsuario> {
   })
 }
 
-export function postUsuario(userId: string, payload: NuevoUsuarioPayload): Promise<ApiUsuario> {
+export function postUsuario(user: ApiUsuario, payload: NuevoUsuarioPayload): Promise<ApiUsuario> {
   return request(`${BASE}/usuarios`, {
     method: 'POST',
-    headers: hdrs(userId),
+    headers: hdrs(user),
     body: JSON.stringify(payload),
   })
 }
@@ -263,6 +277,6 @@ export interface RecomendacionResult {
   source: 'ai' | 'heuristic'
 }
 
-export function fetchRecomendacion(userId: string): Promise<RecomendacionResult> {
-  return request(`${BASE}/recomendacion`, { headers: hdrs(userId) })
+export function fetchRecomendacion(user: ApiUsuario): Promise<RecomendacionResult> {
+  return request(`${BASE}/recomendacion`, { headers: hdrs(user) })
 }

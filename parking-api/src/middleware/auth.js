@@ -1,19 +1,28 @@
 const supabase = require('../supabase')
+const { verifySession } = require('../session')
 
 // Middleware principal: verifica que el usuario exista y esté activo
-// Recibe el UUID del usuario en el header x-user-id
-// En producción: validar Firebase JWT y extraer el uid del token
+// Recibe un token firmado en Authorization: Bearer <token>
 const auth = async (req, res, next) => {
-  const uid = req.headers['x-user-id']
+  const authHeader = req.headers.authorization || ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
-  if (!uid) {
-    return res.status(401).json({ error: 'Header x-user-id requerido' })
+  let session
+  try {
+    session = verifySession(token)
+  } catch (err) {
+    return res.status(401).json({ error: (err).message })
+  }
+
+  const headerUid = req.headers['x-user-id']
+  if (headerUid && headerUid !== session.sub) {
+    return res.status(401).json({ error: 'Sesión no corresponde al usuario solicitado' })
   }
 
   const { data: user, error } = await supabase
     .from('usuarios_enrolados')
     .select('id, nombre, rol, activo')
-    .eq('id', uid)
+    .eq('id', session.sub)
     .single()
 
   if (error || !user) {

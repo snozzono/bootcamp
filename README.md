@@ -35,6 +35,7 @@ bootcamp/
 # parking-api/.env
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SESSION_SECRET=clave-larga-aleatoria # firma sesiones; si falta usa SUPABASE_SERVICE_ROLE_KEY
 GOOGLE_AI_API_KEY=AIzaSy...     # opcional — habilita Gemini
 PORT=3000
 ```
@@ -87,10 +88,10 @@ npm run dev
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| POST | `/api/auth/login` | Login con correo y contraseña. Devuelve usuario. |
+| POST | `/api/auth/login` | Login con correo y contraseña. Devuelve usuario y sesión. |
 | POST | `/api/auth/register` | Registro público (crea conductor). |
 
-> Todas las rutas protegidas requieren el header `x-user-id: <UUID>`.
+> Todas las rutas protegidas requieren `Authorization: Bearer <session_token>`. El frontend también envía `x-user-id` como verificación cruzada.
 
 ### Estacionamientos
 
@@ -169,7 +170,7 @@ git clone https://github.com/<usuario>/<repo>.git ~/bootcamp
 
 ```bash
 nano ~/bootcamp/parking-api/.env
-# Pegar SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GOOGLE_AI_API_KEY
+# Pegar SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SESSION_SECRET, GOOGLE_AI_API_KEY
 ```
 
 ### Paso 4 — Configurar nginx

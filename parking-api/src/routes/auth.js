@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const bcrypt = require('bcrypt')
 const supabase = require('../supabase')
+const { createSession } = require('../session')
 
 // POST /auth/login
 router.post('/login', async (req, res) => {
@@ -34,7 +35,12 @@ router.post('/login', async (req, res) => {
   }
 
   const { password_hash, ...safeUser } = user
-  res.json(safeUser)
+  const session = createSession(safeUser)
+  res.json({
+    ...safeUser,
+    session_token: session.token,
+    session_expires_at: session.expires_at,
+  })
 })
 
 // POST /auth/register — auto-registro público (solo crea conductores)
@@ -72,7 +78,12 @@ router.post('/register', async (req, res) => {
     return res.status(500).json({ error: error.message })
   }
 
-  res.status(201).json(data)
+  const session = createSession(data)
+  res.status(201).json({
+    ...data,
+    session_token: session.token,
+    session_expires_at: session.expires_at,
+  })
 })
 
 module.exports = router
