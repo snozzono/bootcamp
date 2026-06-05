@@ -21,4 +21,5 @@ pm2 restart parking-api 2>/dev/null || pm2 start src/app.js --name parking-api
 
 pm2 save
 echo ""
-echo "Deploy completo. App corriendo en http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo 'localhost')"
+PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || echo '<tu-ip-ec2>')
+echo "Deploy completo. App corriendo en http://$PUBLIC_IP"
