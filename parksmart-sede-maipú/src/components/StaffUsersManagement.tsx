@@ -1,21 +1,45 @@
 import { useState } from 'react';
 import { UserProfile, UserRole } from '../types';
-import { Search, Plus, Filter, ShieldAlert, User, Trash2, Edit2, ShieldCheck, Mail } from 'lucide-react';
+import { ApiUsuario, NuevoUsuarioPayload } from '../api';
+import { Search, Plus, Filter, Trash2, Edit2, ShieldCheck, Mail, X } from 'lucide-react';
 
 interface StaffUsersManagementProps {
+  currentUser: ApiUsuario;
   users: UserProfile[];
   onToggleUserActive: (userId: string) => void;
   onUpdateUserRole: (userId: string, role: UserRole) => void;
+  onCreateUser: (payload: NuevoUsuarioPayload) => Promise<void>;
 }
 
+const ROLES_VALIDOS = ['conductor','guardia','jefe_seguridad','jefe_servicios_generales','super_admin'] as const;
+const ROL_LABEL: Record<string, string> = {
+  conductor: 'Conductor',
+  guardia: 'Guardia',
+  jefe_seguridad: 'Jefe Seguridad',
+  jefe_servicios_generales: 'Jefe Servicios Gral.',
+  super_admin: 'Super Admin',
+};
+
+const emptyForm = (): NuevoUsuarioPayload => ({
+  rut: '', nombre: '', correo: '', rol: 'conductor', telefono: '', patente_asociada: ''
+});
+
 export default function StaffUsersManagement({
+  currentUser,
   users,
   onToggleUserActive,
-  onUpdateUserRole
+  onUpdateUserRole,
+  onCreateUser,
 }: StaffUsersManagementProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [selectedRoleOption, setSelectedRoleOption] = useState<UserRole>('Guardia');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState<NuevoUsuarioPayload>(emptyForm());
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const canCreate = currentUser.rol === 'super_admin';
 
   const totalCount = users.length;
   const activeCount = users.filter(u => u.active).length;
@@ -37,6 +61,21 @@ export default function StaffUsersManagement({
     if (editingUser) {
       onUpdateUserRole(editingUser.id, selectedRoleOption);
       setEditingUser(null);
+    }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+    setCreateLoading(true);
+    try {
+      await onCreateUser(createForm);
+      setShowCreateModal(false);
+      setCreateForm(emptyForm());
+    } catch (err) {
+      setCreateError((err as Error).message);
+    } finally {
+      setCreateLoading(false);
     }
   };
 
@@ -97,10 +136,15 @@ export default function StaffUsersManagement({
             <Filter className="w-3.5 h-3.5" />
             Filtrar
           </button>
-          <button className="flex-1 sm:flex-none px-4 py-2 bg-[#00288e] hover:bg-blue-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all outline-none">
-            <Plus className="w-3.5 h-3.5" />
-            Nuevo Usuario
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex-1 sm:flex-none px-4 py-2 bg-[#00288e] hover:bg-blue-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all outline-none"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nuevo Usuario
+            </button>
+          )}
         </div>
       </div>
 
@@ -229,6 +273,118 @@ export default function StaffUsersManagement({
           </p>
         </div>
       </section>
+
+      {/* Modal Crear Usuario */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black text-gray-900">Nuevo Usuario</h3>
+              <button onClick={() => { setShowCreateModal(false); setCreateForm(emptyForm()); setCreateError(null); }} className="text-gray-400 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">RUT *</label>
+                  <input
+                    required
+                    value={createForm.rut}
+                    onChange={e => setCreateForm(f => ({ ...f, rut: e.target.value }))}
+                    placeholder="12.345.678-9"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] bg-gray-50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Nombre *</label>
+                  <input
+                    required
+                    value={createForm.nombre}
+                    onChange={e => setCreateForm(f => ({ ...f, nombre: e.target.value }))}
+                    placeholder="Juan Pérez"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] bg-gray-50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Correo *</label>
+                <input
+                  required
+                  type="email"
+                  value={createForm.correo}
+                  onChange={e => setCreateForm(f => ({ ...f, correo: e.target.value }))}
+                  placeholder="usuario@duocuc.cl"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] bg-gray-50"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Rol *</label>
+                <select
+                  required
+                  value={createForm.rol}
+                  onChange={e => setCreateForm(f => ({ ...f, rol: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] bg-gray-50 font-semibold"
+                >
+                  {ROLES_VALIDOS.map(r => (
+                    <option key={r} value={r}>{ROL_LABEL[r]}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Teléfono</label>
+                  <input
+                    value={createForm.telefono}
+                    onChange={e => setCreateForm(f => ({ ...f, telefono: e.target.value }))}
+                    placeholder="+56 9 1234 5678"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] bg-gray-50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Patente</label>
+                  <input
+                    value={createForm.patente_asociada}
+                    onChange={e => setCreateForm(f => ({ ...f, patente_asociada: e.target.value.toUpperCase() }))}
+                    placeholder="ABCD-12"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] bg-gray-50 uppercase"
+                  />
+                </div>
+              </div>
+
+              {createError && (
+                <p className="text-xs text-red-600 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">{createError}</p>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateModal(false); setCreateForm(emptyForm()); setCreateError(null); }}
+                  className="py-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLoading}
+                  className="py-3 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl text-xs font-bold disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {createLoading ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5" />
+                  )}
+                  Crear Usuario
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Editing Dialog Modal overlay */}
       {editingUser && (

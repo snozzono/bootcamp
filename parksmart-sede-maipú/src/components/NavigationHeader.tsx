@@ -90,14 +90,16 @@ export default function NavigationHeader({
               >
                 Mapa de Ocupación
               </button>
-              <button
-                onClick={() => onPageChange('staff-users')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  currentPage === 'staff-users' ? 'bg-[#00288e] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Usuarios
-              </button>
+              {currentUser.rol !== 'guardia' && (
+                <button
+                  onClick={() => onPageChange('staff-users')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    currentPage === 'staff-users' ? 'bg-[#00288e] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Usuarios
+                </button>
+              )}
             </div>
           )}
 

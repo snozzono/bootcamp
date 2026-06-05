@@ -4,11 +4,13 @@ import {
   ApiUsuario,
   ROL_DISPLAY,
   DISPLAY_ROL,
+  NuevoUsuarioPayload,
   fetchEstacionamientos,
   fetchIncidencias,
   fetchUsuarios,
   postIngreso,
   postIncidencia,
+  postUsuario,
   patchIncidencia,
   patchEstadoEstacionamiento,
   patchUsuarioRol,
@@ -189,6 +191,17 @@ export default function App() {
     showToast('🔄 Datos actualizados desde la API')
   }
 
+  const handleCreateUser = async (payload: NuevoUsuarioPayload) => {
+    if (!currentUser) return
+    try {
+      await postUsuario(currentUser.id, payload)
+      await fetchData(currentUser)
+      showToast(`✅ Usuario ${payload.nombre} creado correctamente`)
+    } catch (err) {
+      showToast(`Error: ${(err as Error).message}`)
+    }
+  }
+
   if (!currentUser) {
     return <LoginScreen onLogin={setCurrentUser} />
   }
@@ -252,9 +265,11 @@ export default function App() {
         )}
         {currentPage === 'staff-users' && (
           <StaffUsersManagement
+            currentUser={currentUser}
             users={users}
             onToggleUserActive={handleToggleUserActive}
             onUpdateUserRole={handleUpdateUserRole}
+            onCreateUser={handleCreateUser}
           />
         )}
       </main>

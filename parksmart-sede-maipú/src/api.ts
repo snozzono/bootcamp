@@ -210,3 +210,20 @@ export function activarUsuario(userId: string, targetId: string): Promise<unknow
     headers: hdrs(userId),
   })
 }
+
+export interface NuevoUsuarioPayload {
+  rut: string
+  nombre: string
+  correo: string
+  rol: string
+  telefono?: string
+  patente_asociada?: string
+}
+
+export function postUsuario(userId: string, payload: NuevoUsuarioPayload): Promise<ApiUsuario> {
+  return request(`${BASE}/usuarios`, {
+    method: 'POST',
+    headers: hdrs(userId),
+    body: JSON.stringify(payload),
+  })
+}
