@@ -254,6 +254,7 @@ export default function App() {
             slots={slots}
             incidents={incidents}
             onResolveIncident={handleResolveIncident}
+            onUpdateSlotStatus={handleUpdateSlotStatus}
             onRefresh={handleRefresh}
           />
         )}

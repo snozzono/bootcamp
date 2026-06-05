@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ParkingSlot, IncidentReport } from '../types';
-import { RefreshCw, CheckCircle, ArrowUpRight, Compass, Shield, Wifi, BellRing, Settings, CircleAlert, Check } from 'lucide-react';
+import { ParkingSlot, ParkingStatus, ParkingSector, IncidentReport } from '../types';
+import { RefreshCw, CheckCircle, ArrowUpRight, Wifi, BellRing, CircleAlert, Check, Search, Layers, Filter } from 'lucide-react';
 
 interface StaffDashboardProps {
   slots: ParkingSlot[];
   incidents: IncidentReport[];
   onResolveIncident: (incidentId: string) => void;
+  onUpdateSlotStatus: (slotId: number, status: ParkingStatus) => void;
   onRefresh: () => void;
 }
 
@@ -13,9 +14,14 @@ export default function StaffDashboard({
   slots,
   incidents,
   onResolveIncident,
+  onUpdateSlotStatus,
   onRefresh
 }: StaffDashboardProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchCode, setSearchCode] = useState('');
+  const [sectorFilter, setSectorFilter] = useState<ParkingSector | 'Todos'>('Todos');
+  const [statusFilter, setStatusFilter] = useState<ParkingStatus | 'Todos'>('Todos');
+  const [editingSlot, setEditingSlot] = useState<ParkingSlot | null>(null);
 
   // Dynamic values calculated directly from active slot states!
   const totalSlots = slots.length;
@@ -44,7 +50,19 @@ export default function StaffDashboard({
     flowText = "Alta congestión de estacionamiento. Se recomienda priorizar reservas online.";
   }
 
-  const previewSlots = slots;
+  const previewSlots = slots.filter(s => {
+    const matchSearch = s.code.toLowerCase().includes(searchCode.trim().toLowerCase());
+    const matchSector = sectorFilter === 'Todos' || s.sector === sectorFilter;
+    const matchStatus = statusFilter === 'Todos' || s.status === statusFilter;
+    return matchSearch && matchSector && matchStatus;
+  });
+
+  const updateStatus = (status: ParkingStatus) => {
+    if (editingSlot) {
+      onUpdateSlotStatus(editingSlot.id, status);
+      setEditingSlot(null);
+    }
+  };
 
   const activeIncidents = incidents.filter(i => i.status === 'Pending');
 
@@ -214,12 +232,16 @@ export default function StaffDashboard({
         </section>
       )}
 
-      {/* Mapa de Disponibilidad — agrupado por sector */}
-      <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-6">
+      {/* Mapa de Disponibilidad — agrupado por sector, filtrable y editable */}
+      <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
+
+        {/* Header + leyenda */}
+        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Mapa de Disponibilidad</h3>
-            <p className="text-xs text-gray-500">Vista en tiempo real · {previewSlots.length} plazas totales</p>
+            <p className="text-xs text-gray-500">
+              {previewSlots.length} de {slots.length} plazas · toca una para cambiar estado
+            </p>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {[
@@ -237,6 +259,51 @@ export default function StaffDashboard({
           </div>
         </div>
 
+        {/* Filtros */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchCode}
+              onChange={e => setSearchCode(e.target.value)}
+              placeholder="Buscar plaza (ej: A-45)..."
+              className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#00288e] placeholder-gray-400"
+            />
+          </div>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs">
+              <Layers className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-gray-500 font-medium">Sector:</span>
+              <select
+                value={sectorFilter}
+                onChange={e => setSectorFilter(e.target.value as ParkingSector | 'Todos')}
+                className="bg-transparent font-bold text-gray-800 focus:outline-none cursor-pointer"
+              >
+                <option value="Todos">Todos</option>
+                <option value="Norte">Norte</option>
+                <option value="Sur">Sur</option>
+                <option value="Techado">Techado</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-xs">
+              <Filter className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-gray-500 font-medium">Estado:</span>
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as ParkingStatus | 'Todos')}
+                className="bg-transparent font-bold text-gray-800 focus:outline-none cursor-pointer"
+              >
+                <option value="Todos">Todos</option>
+                <option value="free">Libre</option>
+                <option value="occupied">Ocupado</option>
+                <option value="blocked">Inhabilitado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Grid por sector */}
         <div className="space-y-5">
           {(['Norte', 'Techado', 'Sur'] as const).map(sector => {
             const sectorSlots = previewSlots.filter(s => s.sector === sector);
@@ -255,16 +322,16 @@ export default function StaffDashboard({
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5">
                   {sectorSlots.map(slot => {
-                    const isFree     = slot.status === 'free';
+                    const isFree    = slot.status === 'free';
                     const isOccupied = slot.status === 'occupied';
                     const isBlocked  = slot.status === 'blocked';
-                    const isEV       = slot.type === 'ev';
-                    const isPref     = slot.type === 'preferential';
+                    const isEV      = slot.type === 'ev';
+                    const isPref    = slot.type === 'preferential';
 
                     const cellClass = isBlocked
-                      ? 'bg-slate-400 border-slate-500 text-white'
+                      ? 'bg-slate-400 border-slate-500 text-white hover:bg-slate-500'
                       : isOccupied
-                      ? 'bg-red-50 border-red-200 text-red-300'
+                      ? 'bg-red-50 border-red-200 text-red-400 hover:border-red-400'
                       : isFree && isEV
                       ? 'bg-sky-500 border-sky-400 text-white hover:bg-sky-600'
                       : isFree && isPref
@@ -272,25 +339,75 @@ export default function StaffDashboard({
                       : 'bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600';
 
                     return (
-                      <div
+                      <button
                         key={slot.id}
+                        onClick={() => setEditingSlot(slot)}
                         title={`${slot.code} · ${isEV ? 'EV' : isPref ? 'Preferencial' : 'Estándar'} · ${
                           isBlocked ? 'Inhabilitado' : isOccupied ? 'Ocupado' : 'Libre'
                         }`}
-                        className={`h-10 border rounded-lg flex flex-col items-center justify-center transition-all shadow-xs ${cellClass}`}
+                        className={`h-10 border rounded-lg flex flex-col items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95 ${cellClass}`}
                       >
                         {isFree && isEV   && <span className="text-[8px] leading-none">⚡</span>}
                         {isFree && isPref && <span className="text-[8px] leading-none">♿</span>}
                         <span className="text-[9px] font-bold leading-none mt-0.5">{slot.code}</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
               </div>
             );
           })}
+
+          {previewSlots.length === 0 && (
+            <p className="text-center text-sm text-gray-400 py-8">
+              No hay plazas que coincidan con los filtros aplicados.
+            </p>
+          )}
         </div>
       </section>
+
+      {/* Modal editar plaza */}
+      {editingSlot && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 space-y-5 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 text-center">
+            <h3 className="text-lg font-black text-gray-900 tracking-tight">
+              Gestionar Plaza: <span className="text-[#00288e]">{editingSlot.code}</span>
+            </h3>
+            <p className="text-xs text-slate-500">
+              Sector {editingSlot.sector} · Piso {editingSlot.floor} · {editingSlot.type === 'ev' ? 'Carga EV' : editingSlot.type === 'preferential' ? 'Preferencial' : 'Estándar'}
+            </p>
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={() => updateStatus('free')}
+                className="w-full py-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                Marcar como Disponible / Libre
+              </button>
+              <button
+                onClick={() => updateStatus('occupied')}
+                className="w-full py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-800 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                Marcar como Ocupado
+              </button>
+              <button
+                onClick={() => updateStatus('blocked')}
+                className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+                Marcar como Inhabilitado / Bloqueado
+              </button>
+            </div>
+            <button
+              onClick={() => setEditingSlot(null)}
+              className="text-slate-500 hover:text-slate-800 text-xs font-semibold hover:underline"
+            >
+              Cerrar sin guardar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Location Context Card and General Notes */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
