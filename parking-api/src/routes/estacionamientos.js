@@ -5,7 +5,7 @@ const { auth, requireRole } = require('../middleware/auth')
 // GET /estacionamientos
 // Panel completo — todos los espacios con datos del conductor actual
 // Roles: guardia, jefe_seguridad, jefe_servicios_generales, super_admin
-router.get('/', auth, requireRole('guardia','jefe_seguridad','jefe_servicios_generales','super_admin'), async (req, res) => {
+router.get('/', auth, requireRole('conductor','guardia','jefe_seguridad','jefe_servicios_generales','super_admin'), async (req, res) => {
   const { data, error } = await supabase
     .from('estacionamientos')
     .select(`

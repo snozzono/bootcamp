@@ -1,0 +1,6 @@
+{
+  "name": "ParkSmart Sede Maipú",
+  "description": "Sistema Inteligente de Gestión y Monitoreo de Estacionamiento para la Sede Maipú",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

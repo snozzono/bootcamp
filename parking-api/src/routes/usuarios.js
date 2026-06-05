@@ -2,6 +2,17 @@ const router = require('express').Router()
 const supabase = require('../supabase')
 const { auth, requireRole } = require('../middleware/auth')
 
+// GET /usuarios/publico — selector de login (sin auth)
+router.get('/publico', async (req, res) => {
+  const { data, error } = await supabase
+    .from('usuarios_enrolados')
+    .select('id, nombre, rol, activo, correo, patente_asociada')
+    .eq('activo', true)
+    .order('nombre')
+  if (error) return res.status(500).json({ error: error.message })
+  res.json(data)
+})
+
 // GET /usuarios
 // Listar todos los usuarios — búsqueda por nombre, rut o patente
 router.get('/', auth, requireRole('super_admin','jefe_servicios_generales'), async (req, res) => {
@@ -102,6 +113,24 @@ router.patch('/:id/rol', auth, requireRole('super_admin'), async (req, res) => {
   })
 
   res.json({ mensaje: 'Rol actualizado. El usuario deberá iniciar sesión nuevamente.', data })
+})
+
+// PATCH /usuarios/:id/activar — reactivar usuario desactivado
+router.patch('/:id/activar', auth, requireRole('super_admin'), async (req, res) => {
+  const { id } = req.params
+  const { data, error } = await supabase
+    .from('usuarios_enrolados')
+    .update({ activo: true })
+    .eq('id', id)
+    .select('id, nombre')
+    .single()
+  if (error) return res.status(500).json({ error: error.message })
+  await supabase.from('logs_seguridad').insert({
+    usuario_id: req.user.id,
+    accion: 'reactivacion_usuario',
+    detalle: `Reactivado: ${data.nombre}`
+  })
+  res.json({ mensaje: `Usuario ${data.nombre} reactivado.` })
 })
 
 // DELETE /usuarios/:id

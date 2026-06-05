@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors    = require('cors')
+const path    = require('path')
 
 const app = express()
 
@@ -15,6 +16,7 @@ app.use('/api/reservas',         require('./routes/reservas'))
 app.use('/api/usuarios',         require('./routes/usuarios'))
 app.use('/api/configuracion',    require('./routes/configuracion'))
 app.use('/api/dashboard',        require('./routes/dashboard'))
+app.use('/api/recomendacion',    require('./routes/recomendacion'))
 
 // ── Health check ─────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -42,12 +44,24 @@ app.get('/', (req, res) => {
       'GET    /api/configuracion',
       'PATCH  /api/configuracion',
       'GET    /api/dashboard',
-      'GET    /api/dashboard/reportes'
+      'GET    /api/dashboard/reportes',
+      'GET    /api/recomendacion        ← IA Google Gemini'
     ]
   })
 })
 
-// ── 404 ──────────────────────────────────────────────────────
+// ── Frontend estático (producción) ───────────────────────────
+// El build del frontend se copia a parking-api/public/ antes del deploy
+const FRONTEND = path.join(__dirname, '../public')
+app.use(express.static(FRONTEND))
+
+// SPA fallback: cualquier ruta que no sea /api/* sirve index.html
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next()
+  res.sendFile(path.join(FRONTEND, 'index.html'))
+})
+
+// ── 404 para rutas /api no encontradas ───────────────────────
 app.use((req, res) => {
   res.status(404).json({ error: `Ruta ${req.method} ${req.path} no existe` })
 })

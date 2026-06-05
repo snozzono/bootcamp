@@ -1,0 +1,212 @@
+import { ParkingSlot, ParkingStatus, UserProfile, UserRole, IncidentReport } from './types'
+import { getSlotMeta } from './data'
+
+const BASE = '/api'
+
+// ── API response types ────────────────────────────────────────
+
+export interface ApiUsuario {
+  id: string
+  nombre: string
+  rol: string
+  activo: boolean
+  correo?: string
+  patente_asociada?: string
+}
+
+interface ApiEstacionamiento {
+  id: number
+  codigo: string
+  estado: string
+  motivo_estado: string | null
+  updated_at: string
+  usuario_actual?: { id: string; nombre: string; patente_asociada: string } | null
+}
+
+interface ApiIncidencia {
+  id: string
+  descripcion: string
+  estado: string
+  created_at: string
+  estacionamiento: { codigo: string } | null
+  usuario: { nombre: string; patente_asociada?: string } | null
+}
+
+// ── Mapping constants ─────────────────────────────────────────
+
+const ESTADO_STATUS: Record<string, ParkingStatus> = {
+  libre: 'free',
+  ocupado: 'occupied',
+  bloqueado: 'blocked',
+  reservado: 'occupied',
+}
+
+const STATUS_ESTADO: Record<ParkingStatus, string> = {
+  free: 'libre',
+  occupied: 'ocupado',
+  blocked: 'bloqueado',
+}
+
+export const ROL_DISPLAY: Record<string, UserRole> = {
+  conductor: 'Conductor',
+  guardia: 'Guardia',
+  jefe_seguridad: 'Jefe Seguridad',
+  jefe_servicios_generales: 'Jefe Servicios Gral.',
+  super_admin: 'Super Admin',
+}
+
+export const DISPLAY_ROL: Record<UserRole, string> = {
+  Conductor: 'conductor',
+  Guardia: 'guardia',
+  'Jefe Seguridad': 'jefe_seguridad',
+  'Jefe Servicios Gral.': 'jefe_servicios_generales',
+  'Super Admin': 'super_admin',
+}
+
+// ── Mappers ───────────────────────────────────────────────────
+
+export function mapEstacionamiento(e: ApiEstacionamiento): ParkingSlot {
+  return {
+    id: e.id,
+    code: e.codigo,
+    status: ESTADO_STATUS[e.estado] ?? 'free',
+    ...getSlotMeta(e.id),
+  }
+}
+
+export function mapUsuario(u: ApiUsuario): UserProfile {
+  return {
+    id: u.id,
+    name: u.nombre,
+    email: u.correo ?? '',
+    role: ROL_DISPLAY[u.rol] ?? 'Conductor',
+    active: u.activo,
+  }
+}
+
+export function mapIncidencia(i: ApiIncidencia): IncidentReport {
+  let type = 'Incidencia'
+  let description = i.descripcion
+
+  if (i.descripcion.startsWith('[')) {
+    const close = i.descripcion.indexOf(']')
+    if (close > 0) {
+      type = i.descripcion.slice(1, close)
+      description = i.descripcion.slice(close + 2)
+    }
+  }
+
+  return {
+    id: i.id,
+    type,
+    description,
+    timestamp: i.created_at,
+    status: i.estado === 'resuelta' ? 'Resolved' : 'Pending',
+    userEmail: i.usuario?.nombre ?? '',
+    slotCode: i.estacionamiento?.codigo,
+  }
+}
+
+// ── HTTP helper ───────────────────────────────────────────────
+
+async function request<T>(url: string, opts: RequestInit = {}): Promise<T> {
+  const res = await fetch(url, opts)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(body.error ?? res.statusText)
+  }
+  return res.json()
+}
+
+function hdrs(userId: string): Record<string, string> {
+  return { 'Content-Type': 'application/json', 'x-user-id': userId }
+}
+
+// ── Login público ─────────────────────────────────────────────
+
+export function fetchUsuariosPublico(): Promise<ApiUsuario[]> {
+  return request(`${BASE}/usuarios/publico`)
+}
+
+// ── Estacionamientos ──────────────────────────────────────────
+
+export function fetchEstacionamientos(userId: string): Promise<ApiEstacionamiento[]> {
+  return request(`${BASE}/estacionamientos`, { headers: hdrs(userId) })
+}
+
+export function patchEstadoEstacionamiento(
+  userId: string,
+  id: number,
+  status: ParkingStatus,
+  motivo?: string
+): Promise<unknown> {
+  return request(`${BASE}/estacionamientos/${id}/estado`, {
+    method: 'PATCH',
+    headers: hdrs(userId),
+    body: JSON.stringify({ estado: STATUS_ESTADO[status], motivo_estado: motivo }),
+  })
+}
+
+// ── Movimientos ───────────────────────────────────────────────
+
+export function postIngreso(userId: string, estacionamiento_id: number): Promise<unknown> {
+  return request(`${BASE}/movimientos/ingreso`, {
+    method: 'POST',
+    headers: hdrs(userId),
+    body: JSON.stringify({ estacionamiento_id }),
+  })
+}
+
+// ── Incidencias ───────────────────────────────────────────────
+
+export function fetchIncidencias(userId: string): Promise<ApiIncidencia[]> {
+  return request(`${BASE}/incidencias`, { headers: hdrs(userId) })
+}
+
+export function postIncidencia(
+  userId: string,
+  estacionamiento_id: number,
+  descripcion: string
+): Promise<unknown> {
+  return request(`${BASE}/incidencias`, {
+    method: 'POST',
+    headers: hdrs(userId),
+    body: JSON.stringify({ estacionamiento_id, descripcion }),
+  })
+}
+
+export function patchIncidencia(userId: string, id: string, estado: string): Promise<unknown> {
+  return request(`${BASE}/incidencias/${id}`, {
+    method: 'PATCH',
+    headers: hdrs(userId),
+    body: JSON.stringify({ estado }),
+  })
+}
+
+// ── Usuarios ──────────────────────────────────────────────────
+
+export function fetchUsuarios(userId: string): Promise<ApiUsuario[]> {
+  return request(`${BASE}/usuarios`, { headers: hdrs(userId) })
+}
+
+export function patchUsuarioRol(userId: string, targetId: string, rol: string): Promise<unknown> {
+  return request(`${BASE}/usuarios/${targetId}/rol`, {
+    method: 'PATCH',
+    headers: hdrs(userId),
+    body: JSON.stringify({ rol }),
+  })
+}
+
+export function deleteUsuario(userId: string, targetId: string): Promise<unknown> {
+  return request(`${BASE}/usuarios/${targetId}`, {
+    method: 'DELETE',
+    headers: hdrs(userId),
+  })
+}
+
+export function activarUsuario(userId: string, targetId: string): Promise<unknown> {
+  return request(`${BASE}/usuarios/${targetId}/activar`, {
+    method: 'PATCH',
+    headers: hdrs(userId),
+  })
+}
