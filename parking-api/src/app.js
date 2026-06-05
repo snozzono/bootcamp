@@ -19,7 +19,7 @@ app.use('/api/dashboard',        require('./routes/dashboard'))
 app.use('/api/recomendacion',    require('./routes/recomendacion'))
 
 // ── Health check ─────────────────────────────────────────────
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({
     api: 'Gestión de Estacionamientos — DuocUC Maipú',
     version: '1.0.0',
