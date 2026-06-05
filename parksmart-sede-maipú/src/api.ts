@@ -229,6 +229,23 @@ export function postLogin(correo: string, password: string): Promise<ApiUsuario>
   })
 }
 
+export interface RegisterPayload {
+  rut: string
+  nombre: string
+  correo: string
+  password: string
+  patente_asociada?: string
+  telefono?: string
+}
+
+export function postRegister(payload: RegisterPayload): Promise<ApiUsuario> {
+  return request(`${BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
 export function postUsuario(userId: string, payload: NuevoUsuarioPayload): Promise<ApiUsuario> {
   return request(`${BASE}/usuarios`, {
     method: 'POST',
