@@ -53,7 +53,7 @@ export default function DriverLocationCheckIn({
         </div>
 
         {/* Top visual reference card (Position map preview) */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden relative min-h-[140px] shadow-2xs">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden relative min-h-[140px] shadow-xs">
           {/* Mock Map background pattern */}
           <div className="absolute inset-0 bg-slate-100 pointer-events-none opacity-80 flex items-center justify-center">
             <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:12px_12px] opacity-35"></div>
@@ -65,7 +65,7 @@ export default function DriverLocationCheckIn({
           </div>
           
           <div className="absolute bottom-3 left-3 right-3 z-10 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-gray-200/50 flex items-center gap-2 shadow-xs">
-            <span className="bg-[#00288e] text-on-primary text-[9px] font-bold px-2 py-0.5 rounded tracking-wide font-sans">
+            <span className="bg-[#00288e] text-white text-[9px] font-bold px-2 py-0.5 rounded tracking-wide font-sans">
               POSICIÓN EN VIVO
             </span>
             <span className="text-gray-700 text-xs font-semibold flex items-center gap-1">
@@ -120,7 +120,7 @@ export default function DriverLocationCheckIn({
           </div>
 
           <div className="text-2xl font-black text-gray-900 tracking-tight">{arrivalTime}</div>
-          <p className="text-xs text-gray-500 font-medium">Registrado automáticamente por GPS del Nodo #04</p>
+          <p className="text-xs text-gray-500 font-medium">Registrado al momento de confirmar el estacionamiento</p>
         </div>
 
         {/* Plate Card */}
@@ -150,7 +150,7 @@ export default function DriverLocationCheckIn({
           <button
             onClick={handleConfirm}
             disabled={isLoading}
-            className={`w-full py-4 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl font-bold text-sm tracking-wide shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 ${
+            className={`w-full py-4 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl font-bold text-sm tracking-wide shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 ${
               isLoading ? 'opacity-80 cursor-not-allowed' : ''
             }`}
           >

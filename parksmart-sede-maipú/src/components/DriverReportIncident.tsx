@@ -116,7 +116,7 @@ export default function DriverReportIncident({
             
             <div 
               onClick={simulateCameraClick}
-              className="relative border-2 border-dashed border-gray-200 hover:border-blue-600 hover:bg-blue-50/50 bg-white rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all shadow-2xs group min-h-[140px]"
+              className="relative border-2 border-dashed border-gray-200 hover:border-blue-600 hover:bg-blue-50/50 bg-white rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all shadow-xs group min-h-[140px]"
             >
               <input 
                 type="file"
@@ -174,7 +174,7 @@ export default function DriverReportIncident({
           {/* Submit Trigger Actions */}
           <button
             type="submit"
-            className="w-full py-4 bg-[#00288e] hover:bg-blue-800 text-white font-bold rounded-xl text-sm leading-none transition-all active:scale-98 shadow-md flex items-center justify-center gap-2"
+            className="w-full py-4 bg-[#00288e] hover:bg-blue-800 text-white font-bold rounded-xl text-sm leading-none transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
           >
             <Send className="w-4 h-4" />
             Enviar Reporte a la Guardia
@@ -199,7 +199,7 @@ export default function DriverReportIncident({
 
             <button
               onClick={handleClose}
-              className="w-full py-3 border border-blue-600 hover:bg-blue-50 text-[#00288e] rounded-full text-xs font-bold transition-all shadow-2xs active:scale-97"
+              className="w-full py-3 border border-blue-600 hover:bg-blue-50 text-[#00288e] rounded-full text-xs font-bold transition-all shadow-xs active:scale-95"
             >
               Entendido
             </button>

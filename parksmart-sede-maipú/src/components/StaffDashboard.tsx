@@ -63,9 +63,9 @@ export default function StaffDashboard({
         
         {/* Active Emergency / Incident alerts toast inline */}
         {activeIncidents.length > 0 && (
-          <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs animate-bounce animate-none md:block">
+          <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs md:block">
             <div className="flex items-center gap-2">
-              <CircleAlert className="w-4 h-4 text-red-650" />
+              <CircleAlert className="w-4 h-4 text-red-600" />
               <span>Hay {activeIncidents.length} reportes de incidencias activos!</span>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function StaffDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Dial Occupancy Card (Primary Focus) */}
-        <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 p-6 md:p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-2xs group">
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 p-6 md:p-8 flex flex-col items-center justify-center relative overflow-hidden shadow-xs group">
           <div className="absolute top-4 right-4">
             <button
               onClick={handleRefreshClick}
@@ -121,7 +121,7 @@ export default function StaffDashboard({
             </div>
           </div>
 
-          <p className="mt-6 text-sm font-semibold text-gray-650 text-center max-w-xs">
+          <p className="mt-6 text-sm font-semibold text-gray-600 text-center max-w-xs">
             {flowText}
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function StaffDashboard({
         {/* Detailed Status Cards */}
         <div className="lg:col-span-5 flex flex-col gap-6">
           {/* Availability Big Card (Green background) */}
-          <div className="flex-1 bg-[#6bff8f] p-6 lg:p-8 rounded-2xl border border-gray-200 flex flex-col justify-between shadow-2xs">
+          <div className="flex-1 bg-[#6bff8f] p-6 lg:p-8 rounded-2xl border border-gray-200 flex flex-col justify-between shadow-xs">
             <div className="flex justify-between items-start">
               <div className="w-10 h-10 bg-[#006e2f]/10 rounded-full flex items-center justify-center text-[#006e2f]">
                 <CheckCircle className="w-6 h-6 stroke-[2.5]" />
@@ -151,15 +151,15 @@ export default function StaffDashboard({
 
           {/* Auxiliary Info (Bento Style Sub-row) */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col justify-between shadow-2xs">
+            <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col justify-between shadow-xs">
               <span className="text-lg">🔌</span>
               <div>
-                <h4 className="text-[10px] font-bold uppercase text-blue-650 tracking-wider">Carga EV</h4>
+                <h4 className="text-[10px] font-bold uppercase text-blue-600 tracking-wider">Carga EV</h4>
                 <p className="text-2xl font-black text-blue-900 mt-1">{evFree} Libres</p>
               </div>
             </div>
             
-            <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-105 flex flex-col justify-between shadow-2xs">
+            <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-105 flex flex-col justify-between shadow-xs">
               <span className="text-lg">♿</span>
               <div>
                 <h4 className="text-[10px] font-bold uppercase text-indigo-650 tracking-wider">Preferencial</h4>
@@ -204,7 +204,7 @@ export default function StaffDashboard({
                   <span>Reportado por: {incident.userEmail}</span>
                   <button
                     onClick={() => onResolveIncident(incident.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-3xs"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-xs"
                   >
                     <Check className="w-3 h-3" /> Resuelto
                   </button>
@@ -216,7 +216,7 @@ export default function StaffDashboard({
       )}
 
       {/* Real-time Grid Visualizer (P1 - P48 Mini layout matching mockup 1) */}
-      <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-3xs">
+      <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Mapa de Disponibilidad (P1 - P48)</h3>
@@ -225,15 +225,15 @@ export default function StaffDashboard({
           <div className="flex gap-3 text-xs font-semibold">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 bg-emerald-500 rounded-xs"></span>
-              <span className="text-gray-550 text-[11px]">Libre</span>
+              <span className="text-gray-500 text-[11px]">Libre</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 bg-gray-300 rounded-xs"></span>
-              <span className="text-gray-550 text-[11px]">Ocupado</span>
+              <span className="text-gray-500 text-[11px]">Ocupado</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 bg-slate-400 rounded-xs"></span>
-              <span className="text-gray-550 text-[11px]">Inhabilitado</span>
+              <span className="text-gray-500 text-[11px]">Inhabilitado</span>
             </div>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function StaffDashboard({
             return (
               <div
                 key={slot.id}
-                className={`h-9 border text-[10px] font-bold rounded flex items-center justify-center transition-all shadow-3xs ${
+                className={`h-9 border text-[10px] font-bold rounded flex items-center justify-center transition-all shadow-xs ${
                   isOccupied
                     ? 'bg-gray-200 border-gray-300 text-gray-500'
                     : isBlocked
@@ -263,7 +263,7 @@ export default function StaffDashboard({
 
       {/* Location Context Card and General Notes */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-250/80 rounded-2xl overflow-hidden flex flex-col sm:flex-row h-full shadow-3xs">
+        <div className="bg-white border border-gray-200/80 rounded-2xl overflow-hidden flex flex-col sm:flex-row h-full shadow-xs">
           <div className="w-full sm:w-1/3 bg-slate-100 relative min-h-[140px] border-r border-gray-100">
             <img
               alt="Maipú Facility Map"
@@ -296,7 +296,7 @@ export default function StaffDashboard({
             Se recomienda a todo el personal de guardias guiar la descarga de la app oficial para reservas de accesos prioritarios o pagos de tarifas automáticas de inmediato.
           </p>
           <div className="flex gap-3">
-            <button className="bg-white text-blue-900 border border-transparent font-bold text-xs uppercase tracking-widest px-4 py-2 rounded shadow-2xs hover:bg-gray-150 transition-colors">
+            <button className="bg-white text-blue-900 border border-transparent font-bold text-xs uppercase tracking-widest px-4 py-2 rounded shadow-xs hover:bg-gray-150 transition-colors">
               Descargar App
             </button>
           </div>
@@ -311,7 +311,7 @@ export default function StaffDashboard({
             <span>Sistema Conectado (Sede Central)</span>
           </div>
           <span className="hidden sm:inline text-gray-300">|</span>
-          <span className="hidden sm:inline font-medium">Frecuencia de Auto-refresco: 30s automático</span>
+          <span className="hidden sm:inline font-medium">Actualización manual con el botón "Actualizar"</span>
         </div>
         <div className="font-semibold text-slate-500">
           © 2026 ParkSmart Global S.A.

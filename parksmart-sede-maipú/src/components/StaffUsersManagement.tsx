@@ -17,10 +17,9 @@ export default function StaffUsersManagement({
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [selectedRoleOption, setSelectedRoleOption] = useState<UserRole>('Guardia');
 
-  // Calculate dynamic stats
-  const totalCount = 124; // Static base from mockup + dynamic addition if any
-  const activeCount = users.filter(u => u.active).length + 13; // mockup states 18
-  const pendingCount = 3;
+  const totalCount = users.length;
+  const activeCount = users.filter(u => u.active).length;
+  const inactiveCount = users.filter(u => !u.active).length;
   const alertCount = 0;
 
   const filteredUsers = users.filter(u => {
@@ -60,26 +59,26 @@ export default function StaffUsersManagement({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-2xs">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-xs">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Total Usuarios</span>
           <span className="text-3xl font-black text-[#00288e] tracking-tight mt-1">{totalCount}</span>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-2xs">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-xs">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Activos Ahora</span>
           <span className="text-3xl font-black text-emerald-600 tracking-tight mt-1">{activeCount}</span>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-2xs">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Pendientes</span>
-          <span className="text-3xl font-black text-amber-600 tracking-tight mt-1">{pendingCount}</span>
+        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-xs">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Inactivos</span>
+          <span className="text-3xl font-black text-amber-600 tracking-tight mt-1">{inactiveCount}</span>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-2xs">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col justify-between shadow-xs">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block">Alertas</span>
           <span className="text-3xl font-black text-red-600 tracking-tight mt-1">{alertCount}</span>
         </div>
       </div>
 
       {/* Filters search row */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-3xs">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-xs">
         <div className="relative w-full sm:max-w-sm">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
             <Search className="w-4 h-4" />
@@ -121,15 +120,15 @@ export default function StaffUsersManagement({
             // Role colors mapping
             let roleBadgeClass = 'bg-blue-50 text-[#00288e] border-blue-100';
             if (user.role === 'Super Admin') {
-              roleBadgeClass = 'bg-blue-105 bg-indigo-50 border-indigo-150 text-indigo-805 text-[#00288e] font-bold';
+              roleBadgeClass = 'bg-blue-100 bg-indigo-50 border-indigo-100 text-indigo-800 text-[#00288e] font-bold';
             } else if (user.role === 'Jefe Seguridad') {
-              roleBadgeClass = 'bg-slate-50 text-slate-850 border-slate-205';
+              roleBadgeClass = 'bg-slate-50 text-slate-800 border-slate-200';
             }
 
             return (
               <div
                 key={user.id}
-                className="bg-white border border-gray-150 rounded-xl hover:shadow-2xs transition-all p-4 md:p-3 flex flex-col md:grid md:grid-cols-12 items-center gap-4 md:gap-0"
+                className="bg-white border border-gray-100 rounded-xl hover:shadow-xs transition-all p-4 md:p-3 flex flex-col md:grid md:grid-cols-12 items-center gap-4 md:gap-0"
               >
                 {/* Profile card metadata column */}
                 <div className="w-full md:col-span-5 flex items-center gap-3">
@@ -187,7 +186,7 @@ export default function StaffUsersManagement({
                     className="text-[#00288e] hover:underline text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                   >
                     <Edit2 className="w-3.5 h-3.5 inline text-[#00288e]" />
-                    Edit Role
+                    Editar Rol
                   </button>
                 </div>
               </div>
@@ -202,7 +201,7 @@ export default function StaffUsersManagement({
 
       {/* Standard descriptions context section */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-1.5 shadow-3xs">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-1.5 shadow-xs">
           <h3 className="text-[10px] font-extrabold text-[#00288e] uppercase tracking-widest flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-[#00288e]" />
             Jerarquía de Seguridad
@@ -212,7 +211,7 @@ export default function StaffUsersManagement({
           </p>
         </div>
         
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-1.5 shadow-3xs">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-1.5 shadow-xs">
           <h3 className="text-[10px] font-extrabold text-[#00288e] uppercase tracking-widest flex items-center gap-1.5">
             👥 Auditoría Inmediata
           </h3>
@@ -221,7 +220,7 @@ export default function StaffUsersManagement({
           </p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-1.5 shadow-3xs">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-1.5 shadow-xs">
           <h3 className="text-[10px] font-extrabold text-[#00288e] uppercase tracking-widest flex items-center gap-1.5">
             ⚡ Inactivación Express
           </h3>
@@ -256,13 +255,13 @@ export default function StaffUsersManagement({
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setEditingUser(null)}
-                className="py-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-650 hover:bg-gray-50 cursor-pointer active:scale-97"
+                className="py-3 border border-gray-200 rounded-xl text-xs font-bold text-gray-650 hover:bg-gray-50 cursor-pointer active:scale-95"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveRole}
-                className="py-3 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl text-xs font-bold cursor-pointer active:scale-97"
+                className="py-3 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl text-xs font-bold cursor-pointer active:scale-95"
               >
                 Guardar Cambios
               </button>

@@ -245,6 +245,39 @@ export default function DriverMapBooking({
         </div>
       </section>
 
+      {/* Lista de plazas filtradas */}
+      {filteredSlots.length > 0 && (
+        <section className="space-y-2">
+          <p className="text-xs font-semibold text-gray-500">
+            {filteredSlots.filter(s => s.status === 'free').length} libres de {filteredSlots.length} plazas
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {filteredSlots.map(slot => (
+              <button
+                key={slot.id}
+                onClick={() => slot.status !== 'blocked' ? setSelectedSlot(slot) : undefined}
+                disabled={slot.status === 'blocked'}
+                className={`p-2.5 rounded-xl border text-left transition-all ${
+                  selectedSlot?.id === slot.id
+                    ? 'border-[#00288e] bg-blue-50 shadow-sm'
+                    : slot.status === 'free'
+                    ? 'border-gray-200 bg-white hover:border-[#00288e] hover:shadow-sm'
+                    : slot.status === 'occupied'
+                    ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                    : 'border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed'
+                }`}
+              >
+                <span className={`block w-2 h-2 rounded-full mb-1.5 ${
+                  slot.status === 'free' ? 'bg-emerald-500' : slot.status === 'occupied' ? 'bg-red-400' : 'bg-gray-400'
+                }`} />
+                <span className="block text-xs font-bold text-gray-800 truncate">{slot.code}</span>
+                <span className="block text-[9px] text-gray-400 font-medium">{slot.sector}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Selected Spot Details & Booking Panel */}
       <section className="transition-all duration-300">
         {selectedSlot ? (
@@ -302,7 +335,7 @@ export default function DriverMapBooking({
                 href={`https://waze.com/ul?q=Av.+Pajaritos+2100+Maipu`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-2 py-3 border border-gray-200 hover:bg-gray-50 rounded-xl font-bold text-xs text-gray-700 transition-all active:scale-97 shadow-2xs"
+                className="flex items-center justify-center gap-2 py-3 border border-gray-200 hover:bg-gray-50 rounded-xl font-bold text-xs text-gray-700 transition-all active:scale-95 shadow-2xs"
               >
                 <Compass className="w-4 h-4 text-blue-600" />
                 Abrir en Waze
@@ -311,7 +344,7 @@ export default function DriverMapBooking({
               {selectedSlot.status === 'free' ? (
                 <button
                   onClick={handleBook}
-                  className="flex items-center justify-center gap-2 py-3 bg-[#00288e] hover:bg-blue-850 text-white rounded-xl font-bold text-xs transition-all active:scale-97 shadow-sm"
+                  className="flex items-center justify-center gap-2 py-3 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl font-bold text-xs transition-all active:scale-95 shadow-sm"
                 >
                   Reservar Ahora
                 </button>
@@ -328,7 +361,7 @@ export default function DriverMapBooking({
         ) : (
           /* Helper indicator if no spot selected */
           <div className="text-center py-6 bg-blue-50/50 border border-dashed border-blue-200/80 rounded-2xl">
-            <p className="text-blue-900/70 text-xs font-medium">✨ Selecciona un espacio (EV-04, PR-12, A-45) en el mapa interactivo para reservarlo o ver sus detalles.</p>
+            <p className="text-blue-900/70 text-xs font-medium">✨ Selecciona una plaza de la lista o toca un marcador en el mapa para ver sus detalles y reservar.</p>
           </div>
         )}
       </section>
@@ -373,7 +406,7 @@ export default function DriverMapBooking({
               onClick={() => {
                 setShowSuccessModal(false);
               }}
-              className="w-full py-3.5 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-98"
+              className="w-full py-3.5 bg-[#00288e] hover:bg-blue-800 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
             >
               Entendido
             </button>
