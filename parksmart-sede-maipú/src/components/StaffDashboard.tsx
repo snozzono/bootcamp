@@ -44,8 +44,7 @@ export default function StaffDashboard({
     flowText = "Alta congestión de estacionamiento. Se recomienda priorizar reservas online.";
   }
 
-  // Micro grid for visualization (A subset of slots P1 to P48)
-  const previewSlots = slots.slice(0, 48);
+  const previewSlots = slots;
 
   const activeIncidents = incidents.filter(i => i.status === 'Pending');
 
@@ -215,46 +214,78 @@ export default function StaffDashboard({
         </section>
       )}
 
-      {/* Real-time Grid Visualizer (P1 - P48 Mini layout matching mockup 1) */}
+      {/* Mapa de Disponibilidad — agrupado por sector */}
       <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 mb-6">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Mapa de Disponibilidad (P1 - P48)</h3>
-            <p className="text-xs text-gray-500">Vista rápida esquemática para control de barreras de acceso inmediato</p>
+            <h3 className="text-lg font-bold text-gray-900">Mapa de Disponibilidad</h3>
+            <p className="text-xs text-gray-500">Vista en tiempo real · {previewSlots.length} plazas totales</p>
           </div>
-          <div className="flex gap-3 text-xs font-semibold">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 bg-emerald-500 rounded-xs"></span>
-              <span className="text-gray-500 text-[11px]">Libre</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 bg-gray-300 rounded-xs"></span>
-              <span className="text-gray-500 text-[11px]">Ocupado</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 bg-slate-400 rounded-xs"></span>
-              <span className="text-gray-500 text-[11px]">Inhabilitado</span>
-            </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {[
+              { color: 'bg-emerald-500', label: 'Libre' },
+              { color: 'bg-sky-500',     label: 'EV libre' },
+              { color: 'bg-violet-500',  label: 'Preferencial libre' },
+              { color: 'bg-red-200',     label: 'Ocupado' },
+              { color: 'bg-slate-400',   label: 'Inhabilitado' },
+            ].map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <span className={`w-3 h-3 rounded-sm ${color}`}></span>
+                <span className="text-[11px] font-semibold text-gray-500">{label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Responsive Parking Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5">
-          {previewSlots.map((slot) => {
-            const isOccupied = slot.status === 'occupied';
-            const isBlocked = slot.status === 'blocked';
+        <div className="space-y-5">
+          {(['Norte', 'Techado', 'Sur'] as const).map(sector => {
+            const sectorSlots = previewSlots.filter(s => s.sector === sector);
+            if (sectorSlots.length === 0) return null;
+            const sectorFree = sectorSlots.filter(s => s.status === 'free').length;
             return (
-              <div
-                key={slot.id}
-                className={`h-9 border text-[10px] font-bold rounded flex items-center justify-center transition-all shadow-xs ${
-                  isOccupied
-                    ? 'bg-gray-200 border-gray-300 text-gray-500'
-                    : isBlocked
-                    ? 'bg-slate-400 border-slate-500 text-white'
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-400 cursor-pointer'
-                }`}
-              >
-                P{slot.id}
+              <div key={sector}>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest shrink-0">
+                    Sector {sector}
+                  </span>
+                  <div className="flex-1 h-px bg-gray-100" />
+                  <span className="text-[10px] font-bold text-gray-400 shrink-0">
+                    {sectorFree}/{sectorSlots.length} libres
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5">
+                  {sectorSlots.map(slot => {
+                    const isFree     = slot.status === 'free';
+                    const isOccupied = slot.status === 'occupied';
+                    const isBlocked  = slot.status === 'blocked';
+                    const isEV       = slot.type === 'ev';
+                    const isPref     = slot.type === 'preferential';
+
+                    const cellClass = isBlocked
+                      ? 'bg-slate-400 border-slate-500 text-white'
+                      : isOccupied
+                      ? 'bg-red-50 border-red-200 text-red-300'
+                      : isFree && isEV
+                      ? 'bg-sky-500 border-sky-400 text-white hover:bg-sky-600'
+                      : isFree && isPref
+                      ? 'bg-violet-500 border-violet-400 text-white hover:bg-violet-600'
+                      : 'bg-emerald-500 border-emerald-400 text-white hover:bg-emerald-600';
+
+                    return (
+                      <div
+                        key={slot.id}
+                        title={`${slot.code} · ${isEV ? 'EV' : isPref ? 'Preferencial' : 'Estándar'} · ${
+                          isBlocked ? 'Inhabilitado' : isOccupied ? 'Ocupado' : 'Libre'
+                        }`}
+                        className={`h-10 border rounded-lg flex flex-col items-center justify-center transition-all shadow-xs ${cellClass}`}
+                      >
+                        {isFree && isEV   && <span className="text-[8px] leading-none">⚡</span>}
+                        {isFree && isPref && <span className="text-[8px] leading-none">♿</span>}
+                        <span className="text-[9px] font-bold leading-none mt-0.5">{slot.code}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
