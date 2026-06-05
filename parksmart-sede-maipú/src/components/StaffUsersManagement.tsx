@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { ApiUsuario, NuevoUsuarioPayload } from '../api';
 import { Search, Plus, Filter, Trash2, Edit2, ShieldCheck, Mail, X, Eye, EyeOff } from 'lucide-react';
@@ -65,7 +65,7 @@ export default function StaffUsersManagement({
     }
   };
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setCreateError(null);
     setCreateLoading(true);

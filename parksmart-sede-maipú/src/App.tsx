@@ -23,7 +23,6 @@ import {
 import NavigationHeader from './components/NavigationHeader'
 import LoginScreen from './components/LoginScreen'
 import DriverMapBooking from './components/DriverMapBooking'
-import DriverLocationCheckIn from './components/DriverLocationCheckIn'
 import DriverReportIncident from './components/DriverReportIncident'
 import StaffDashboard from './components/StaffDashboard'
 import StaffGridOccupancy from './components/StaffGridOccupancy'
@@ -78,8 +77,16 @@ export default function App() {
     setActiveCheckIn(null)
   }
 
+  const handleCancelReservation = () => {
+    setActiveCheckIn(null)
+  }
+
   const handleReserve = async (slotId: number, plate: string) => {
     if (!currentUser) return
+    if (activeCheckIn) {
+      showToast('Ya tienes una reserva activa. Cancélala primero.')
+      return
+    }
     try {
       await postIngreso(currentUser.id, slotId)
       const slot = slots.find(s => s.id === slotId)
@@ -234,14 +241,10 @@ export default function App() {
         {currentPage === 'driver-map' && (
           <DriverMapBooking
             slots={slots}
+            currentUser={currentUser}
             onReserve={handleReserve}
             activeReservation={activeCheckIn}
-          />
-        )}
-        {currentPage === 'driver-checkin' && (
-          <DriverLocationCheckIn
-            slots={slots}
-            onCheckIn={handleCheckIn}
+            onCancelReservation={handleCancelReservation}
           />
         )}
         {currentPage === 'driver-incident' && (

@@ -253,3 +253,16 @@ export function postUsuario(userId: string, payload: NuevoUsuarioPayload): Promi
     body: JSON.stringify(payload),
   })
 }
+
+// ── Recomendación IA ──────────────────────────────────────────
+
+export interface RecomendacionResult {
+  slotId: number
+  codigo: string
+  razon: string
+  source: 'ai' | 'heuristic'
+}
+
+export function fetchRecomendacion(userId: string): Promise<RecomendacionResult> {
+  return request(`${BASE}/recomendacion`, { headers: hdrs(userId) })
+}

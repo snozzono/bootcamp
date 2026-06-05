@@ -54,14 +54,6 @@ export default function NavigationHeader({
                 Mapa & Reservas
               </button>
               <button
-                onClick={() => onPageChange('driver-checkin')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  currentPage === 'driver-checkin' ? 'bg-[#00288e] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Registrar Ubicación
-              </button>
-              <button
                 onClick={() => onPageChange('driver-incident')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   currentPage === 'driver-incident'
