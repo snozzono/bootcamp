@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const bcrypt = require('bcrypt')
 const supabase = require('../supabase')
 const { auth, requireRole } = require('../middleware/auth')
 
@@ -35,7 +36,7 @@ router.get('/', auth, requireRole('super_admin','jefe_servicios_generales'), asy
 // POST /usuarios
 // Enrolar nuevo conductor o usuario
 router.post('/', auth, requireRole('super_admin'), async (req, res) => {
-  const { rut, nombre, telefono, correo, rol, patente_asociada } = req.body
+  const { rut, nombre, telefono, correo, rol, patente_asociada, password } = req.body
 
   if (!rut || !nombre || !correo || !rol) {
     return res.status(400).json({ error: 'rut, nombre, correo y rol son requeridos' })
@@ -46,9 +47,11 @@ router.post('/', auth, requireRole('super_admin'), async (req, res) => {
     return res.status(400).json({ error: `Rol inválido. Valores: ${rolesValidos.join(', ')}` })
   }
 
+  const password_hash = password ? await bcrypt.hash(password, 10) : null
+
   const { data, error } = await supabase
     .from('usuarios_enrolados')
-    .insert({ rut, nombre, telefono, correo, rol, patente_asociada })
+    .insert({ rut, nombre, telefono, correo, rol, patente_asociada, password_hash })
     .select()
     .single()
 

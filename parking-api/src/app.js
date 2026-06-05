@@ -9,6 +9,7 @@ app.use(cors())
 app.use(express.json())
 
 // ── Rutas ────────────────────────────────────────────────────
+app.use('/api/auth',             require('./routes/auth'))
 app.use('/api/estacionamientos', require('./routes/estacionamientos'))
 app.use('/api/movimientos',      require('./routes/movimientos'))
 app.use('/api/incidencias',      require('./routes/incidencias'))

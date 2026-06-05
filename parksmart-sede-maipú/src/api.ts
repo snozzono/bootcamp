@@ -218,6 +218,15 @@ export interface NuevoUsuarioPayload {
   rol: string
   telefono?: string
   patente_asociada?: string
+  password?: string
+}
+
+export function postLogin(correo: string, password: string): Promise<ApiUsuario> {
+  return request(`${BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ correo, password }),
+  })
 }
 
 export function postUsuario(userId: string, payload: NuevoUsuarioPayload): Promise<ApiUsuario> {
